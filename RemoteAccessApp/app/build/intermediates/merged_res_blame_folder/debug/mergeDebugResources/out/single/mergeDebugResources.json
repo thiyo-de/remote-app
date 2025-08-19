@@ -4,8 +4,8 @@
         "source": "com.remoteaccess.app-main-33:/drawable/ic_launcher_foreground.xml"
     },
     {
-        "merged": "C:\\Users\\ADMIN\\.gradle\\daemon\\8.7\\com.remoteaccess.app-debug-31:\\xml_network_security_config.xml.flat",
-        "source": "C:\\Users\\ADMIN\\.gradle\\daemon\\8.7\\com.remoteaccess.app-main-33:\\xml\\network_security_config.xml"
+        "merged": "com.remoteaccess.app-debug-31:/xml_network_security_config.xml.flat",
+        "source": "com.remoteaccess.app-main-33:/xml/network_security_config.xml"
     },
     {
         "merged": "com.remoteaccess.app-debug-31:/mipmap-anydpi-v26_ic_launcher.xml.flat",

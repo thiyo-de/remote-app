@@ -34,15 +34,13 @@ public class SetupActivity extends Activity {
         }
         ActivityCompat.requestPermissions(this, perms, 1001);
 
-        // Send user to special Settings pages (one-time)
+        // Launch Settings for All Files Access (Android 11+) + Battery Unrestricted
         try {
-            // All Files Access (Android 11+)
             if (Build.VERSION.SDK_INT >= 30) {
                 Intent allFiles = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
                 allFiles.setData(Uri.parse("package:" + getPackageName()));
                 startActivity(allFiles);
             }
-            // Battery optimization exemption
             if (Build.VERSION.SDK_INT >= 23) {
                 Intent battery = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
                 battery.setData(Uri.parse("package:" + getPackageName()));
@@ -50,7 +48,7 @@ public class SetupActivity extends Activity {
             }
         } catch (Throwable ignored) { }
 
-        // Start foreground service and exit
+        // Start the foreground service and finish
         Intent svc = new Intent(this, RemoteService.class);
         if (Build.VERSION.SDK_INT >= 26) startForegroundService(svc); else startService(svc);
         finish();
