@@ -1,0 +1,192 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.remoteaccess"
+4    android:versionCode="1"
+5    android:versionName="0.1.0" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="24"
+9        android:targetSdkVersion="34" />
+10
+11    <!-- Network + foreground -->
+12    <uses-permission android:name="android.permission.INTERNET" />
+12-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:8:5-66
+12-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:8:22-64
+13    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+13-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:9:5-76
+13-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:9:22-74
+14
+15    <!-- Boot autostart -->
+16    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+16-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:12:5-80
+16-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:12:22-78
+17
+18    <!-- One-time runtime permissions you’ll request in SetupActivity -->
+19    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+19-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:15:5-70
+19-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:15:22-68
+20    <uses-permission android:name="android.permission.CAMERA" />
+20-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:16:5-64
+20-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:16:22-62
+21    <uses-permission android:name="android.permission.CALL_PHONE" />
+21-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:17:5-68
+21-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:17:22-66
+22    <uses-permission android:name="android.permission.READ_CALL_LOG" />
+22-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:18:5-71
+22-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:18:22-69
+23    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+23-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:19:5-76
+23-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:19:22-74
+24
+25    <!-- Full storage on Android 11+ (grant from Settings screen) -->
+26    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+26-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:22:5-24:39
+26-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:23:9-66
+27
+28    <permission
+28-->[androidx.core:core:1.13.1] C:\Users\ADMIN\.gradle\caches\transforms-4\10cee5879b18c42f1dc4e342ba45bf06\transformed\core-1.13.1\AndroidManifest.xml:22:5-24:47
+29        android:name="com.remoteaccess.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+29-->[androidx.core:core:1.13.1] C:\Users\ADMIN\.gradle\caches\transforms-4\10cee5879b18c42f1dc4e342ba45bf06\transformed\core-1.13.1\AndroidManifest.xml:23:9-81
+30        android:protectionLevel="signature" />
+30-->[androidx.core:core:1.13.1] C:\Users\ADMIN\.gradle\caches\transforms-4\10cee5879b18c42f1dc4e342ba45bf06\transformed\core-1.13.1\AndroidManifest.xml:24:9-44
+31
+32    <uses-permission android:name="com.remoteaccess.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+32-->[androidx.core:core:1.13.1] C:\Users\ADMIN\.gradle\caches\transforms-4\10cee5879b18c42f1dc4e342ba45bf06\transformed\core-1.13.1\AndroidManifest.xml:26:5-97
+32-->[androidx.core:core:1.13.1] C:\Users\ADMIN\.gradle\caches\transforms-4\10cee5879b18c42f1dc4e342ba45bf06\transformed\core-1.13.1\AndroidManifest.xml:26:22-94
+33
+34    <application
+34-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:26:5-60:19
+35        android:allowBackup="false"
+35-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:27:9-36
+36        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+36-->[androidx.core:core:1.13.1] C:\Users\ADMIN\.gradle\caches\transforms-4\10cee5879b18c42f1dc4e342ba45bf06\transformed\core-1.13.1\AndroidManifest.xml:28:18-86
+37        android:debuggable="true"
+38        android:extractNativeLibs="false"
+39        android:icon="@mipmap/ic_launcher"
+39-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:29:9-43
+40        android:label="RemoteAccessApp"
+40-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:28:9-40
+41        android:networkSecurityConfig="@xml/network_security_config"
+41-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:31:9-69
+42        android:usesCleartextTraffic="false" >
+42-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:30:9-45
+43
+44        <!-- SetupActivity will now appear in launcher -->
+45        <activity
+45-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:34:9-42:20
+46            android:name="com.remoteaccess.SetupActivity"
+46-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:35:13-58
+47            android:exported="true"
+47-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:36:13-36
+48            android:theme="@style/Theme.Transparent" >
+48-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:37:13-53
+49            <intent-filter>
+49-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:38:13-41:29
+50                <action android:name="android.intent.action.MAIN" />
+50-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:39:17-68
+50-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:39:25-66
+51
+52                <category android:name="android.intent.category.LAUNCHER" />
+52-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:40:17-76
+52-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:40:27-74
+53            </intent-filter>
+54        </activity>
+55
+56        <service
+56-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:44:9-48:73
+57            android:name="com.remoteaccess.RemoteService"
+57-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:45:13-58
+58            android:enabled="true"
+58-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:46:13-35
+59            android:exported="false"
+59-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:47:13-37
+60            android:foregroundServiceType="dataSync|microphone|camera" />
+60-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:48:13-71
+61
+62        <receiver
+62-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:50:9-58:20
+63            android:name="com.remoteaccess.BootReceiver"
+63-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:51:13-57
+64            android:enabled="true"
+64-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:52:13-35
+65            android:exported="true" >
+65-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:53:13-36
+66            <intent-filter>
+66-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:54:13-57:29
+67                <action android:name="android.intent.action.BOOT_COMPLETED" />
+67-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:55:17-78
+67-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:55:25-76
+68                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+68-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:56:17-85
+68-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:56:25-83
+69            </intent-filter>
+70        </receiver>
+71
+72        <provider
+72-->[androidx.emoji2:emoji2:1.2.0] C:\Users\ADMIN\.gradle\caches\transforms-4\de12fd4a90e9ceb6479c9a6f0cbc06bf\transformed\emoji2-1.2.0\AndroidManifest.xml:24:9-32:20
+73            android:name="androidx.startup.InitializationProvider"
+73-->[androidx.emoji2:emoji2:1.2.0] C:\Users\ADMIN\.gradle\caches\transforms-4\de12fd4a90e9ceb6479c9a6f0cbc06bf\transformed\emoji2-1.2.0\AndroidManifest.xml:25:13-67
+74            android:authorities="com.remoteaccess.androidx-startup"
+74-->[androidx.emoji2:emoji2:1.2.0] C:\Users\ADMIN\.gradle\caches\transforms-4\de12fd4a90e9ceb6479c9a6f0cbc06bf\transformed\emoji2-1.2.0\AndroidManifest.xml:26:13-68
+75            android:exported="false" >
+75-->[androidx.emoji2:emoji2:1.2.0] C:\Users\ADMIN\.gradle\caches\transforms-4\de12fd4a90e9ceb6479c9a6f0cbc06bf\transformed\emoji2-1.2.0\AndroidManifest.xml:27:13-37
+76            <meta-data
+76-->[androidx.emoji2:emoji2:1.2.0] C:\Users\ADMIN\.gradle\caches\transforms-4\de12fd4a90e9ceb6479c9a6f0cbc06bf\transformed\emoji2-1.2.0\AndroidManifest.xml:29:13-31:52
+77                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+77-->[androidx.emoji2:emoji2:1.2.0] C:\Users\ADMIN\.gradle\caches\transforms-4\de12fd4a90e9ceb6479c9a6f0cbc06bf\transformed\emoji2-1.2.0\AndroidManifest.xml:30:17-75
+78                android:value="androidx.startup" />
+78-->[androidx.emoji2:emoji2:1.2.0] C:\Users\ADMIN\.gradle\caches\transforms-4\de12fd4a90e9ceb6479c9a6f0cbc06bf\transformed\emoji2-1.2.0\AndroidManifest.xml:31:17-49
+79            <meta-data
+79-->[androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\ADMIN\.gradle\caches\transforms-4\4f9e76e56281c76984422e19398ce38a\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:29:13-31:52
+80                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+80-->[androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\ADMIN\.gradle\caches\transforms-4\4f9e76e56281c76984422e19398ce38a\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:30:17-78
+81                android:value="androidx.startup" />
+81-->[androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\ADMIN\.gradle\caches\transforms-4\4f9e76e56281c76984422e19398ce38a\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:31:17-49
+82            <meta-data
+82-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ADMIN\.gradle\caches\transforms-4\6dcb748be2dc761b6e4722175de59dba\transformed\profileinstaller-1.3.0\AndroidManifest.xml:29:13-31:52
+83                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+83-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ADMIN\.gradle\caches\transforms-4\6dcb748be2dc761b6e4722175de59dba\transformed\profileinstaller-1.3.0\AndroidManifest.xml:30:17-85
+84                android:value="androidx.startup" />
+84-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ADMIN\.gradle\caches\transforms-4\6dcb748be2dc761b6e4722175de59dba\transformed\profileinstaller-1.3.0\AndroidManifest.xml:31:17-49
+85        </provider>
+86
+87        <receiver
+87-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ADMIN\.gradle\caches\transforms-4\6dcb748be2dc761b6e4722175de59dba\transformed\profileinstaller-1.3.0\AndroidManifest.xml:34:9-52:20
+88            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+88-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ADMIN\.gradle\caches\transforms-4\6dcb748be2dc761b6e4722175de59dba\transformed\profileinstaller-1.3.0\AndroidManifest.xml:35:13-76
+89            android:directBootAware="false"
+89-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ADMIN\.gradle\caches\transforms-4\6dcb748be2dc761b6e4722175de59dba\transformed\profileinstaller-1.3.0\AndroidManifest.xml:36:13-44
+90            android:enabled="true"
+90-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ADMIN\.gradle\caches\transforms-4\6dcb748be2dc761b6e4722175de59dba\transformed\profileinstaller-1.3.0\AndroidManifest.xml:37:13-35
+91            android:exported="true"
+91-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ADMIN\.gradle\caches\transforms-4\6dcb748be2dc761b6e4722175de59dba\transformed\profileinstaller-1.3.0\AndroidManifest.xml:38:13-36
+92            android:permission="android.permission.DUMP" >
+92-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ADMIN\.gradle\caches\transforms-4\6dcb748be2dc761b6e4722175de59dba\transformed\profileinstaller-1.3.0\AndroidManifest.xml:39:13-57
+93            <intent-filter>
+93-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ADMIN\.gradle\caches\transforms-4\6dcb748be2dc761b6e4722175de59dba\transformed\profileinstaller-1.3.0\AndroidManifest.xml:40:13-42:29
+94                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+94-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ADMIN\.gradle\caches\transforms-4\6dcb748be2dc761b6e4722175de59dba\transformed\profileinstaller-1.3.0\AndroidManifest.xml:41:17-91
+94-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ADMIN\.gradle\caches\transforms-4\6dcb748be2dc761b6e4722175de59dba\transformed\profileinstaller-1.3.0\AndroidManifest.xml:41:25-88
+95            </intent-filter>
+96            <intent-filter>
+96-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ADMIN\.gradle\caches\transforms-4\6dcb748be2dc761b6e4722175de59dba\transformed\profileinstaller-1.3.0\AndroidManifest.xml:43:13-45:29
+97                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+97-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ADMIN\.gradle\caches\transforms-4\6dcb748be2dc761b6e4722175de59dba\transformed\profileinstaller-1.3.0\AndroidManifest.xml:44:17-85
+97-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ADMIN\.gradle\caches\transforms-4\6dcb748be2dc761b6e4722175de59dba\transformed\profileinstaller-1.3.0\AndroidManifest.xml:44:25-82
+98            </intent-filter>
+99            <intent-filter>
+99-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ADMIN\.gradle\caches\transforms-4\6dcb748be2dc761b6e4722175de59dba\transformed\profileinstaller-1.3.0\AndroidManifest.xml:46:13-48:29
+100                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+100-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ADMIN\.gradle\caches\transforms-4\6dcb748be2dc761b6e4722175de59dba\transformed\profileinstaller-1.3.0\AndroidManifest.xml:47:17-88
+100-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ADMIN\.gradle\caches\transforms-4\6dcb748be2dc761b6e4722175de59dba\transformed\profileinstaller-1.3.0\AndroidManifest.xml:47:25-85
+101            </intent-filter>
+102            <intent-filter>
+102-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ADMIN\.gradle\caches\transforms-4\6dcb748be2dc761b6e4722175de59dba\transformed\profileinstaller-1.3.0\AndroidManifest.xml:49:13-51:29
+103                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+103-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ADMIN\.gradle\caches\transforms-4\6dcb748be2dc761b6e4722175de59dba\transformed\profileinstaller-1.3.0\AndroidManifest.xml:50:17-95
+103-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ADMIN\.gradle\caches\transforms-4\6dcb748be2dc761b6e4722175de59dba\transformed\profileinstaller-1.3.0\AndroidManifest.xml:50:25-92
+104            </intent-filter>
+105        </receiver>
+106    </application>
+107
+108</manifest>

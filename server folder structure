@@ -1,0 +1,47 @@
+RemoteServer/
+├─ README.md
+├─ package.json
+├─ .env.example
+├─ .gitignore
+├─ src/
+│  ├─ server.js                  # Express + WS bootstrap, health, graceful shutdown
+│  ├─ config/
+│  │  ├─ env.js                  # Load/validate env (dotenv + simple checks)
+│  │  └─ logger.js               # pino/winston logger
+│  ├─ middleware/
+│  │  ├─ auth.js                 # JWT/device-token verification for REST + WS
+│  │  ├─ rateLimit.js            # express-rate-limit
+│  │  └─ error.js                # centralized error handler
+│  ├─ ws/
+│  │  ├─ gateway.js              # ws server; connection lifecycle; heartbeats
+│  │  ├─ registry.js             # in-memory (or Redis) deviceId ↔ socket map
+│  │  └─ router.js               # validates envelope; dispatches to handlers
+│  ├─ api/
+│  │  ├─ index.js                # mounts /api routes
+│  │  └─ commands.js             # POST /api/command/:deviceId
+│  ├─ handlers/                  # Device-side action handlers (proxy/transform)
+│  │  ├─ device.js               # get_device_info, service_status
+│  │  ├─ files.js                # files_list, file_download/upload/delete
+│  │  ├─ mic.js                  # mic_start/stop (binary streams)
+│  │  ├─ camera.js               # camera_start/stop
+│  │  ├─ calls.js                # call_logs_list, dial_call
+│  │  └─ shell.js                # shell_exec (allowlist)
+│  ├─ services/
+│  │  ├─ deviceService.js        # lastSeen, capabilities, health pings
+│  │  ├─ auditService.js         # append-only action logs
+│  │  └─ transferService.js      # chunk mgmt, resume tokens, integrity
+│  ├─ db/
+│  │  └─ client.js               # (optional) Mongo/SQLite/JSON file store
+│  ├─ utils/
+│  │  ├─ schema.js               # simple Joi/Zod-like validators (use joi)
+│  │  ├─ ids.js                  # uuid/nonce helpers
+│  │  └─ errors.js               # AppError, error codes
+│  └─ constants/
+│     └─ actions.js              # allowlist of supported actions
+├─ scripts/
+│  ├─ dev.sh                     # NODE_ENV=development nodemon src/server.js
+│  ├─ start.sh                   # NODE_ENV=production node src/server.js
+│  └─ pm2.json                   # PM2 ecosystem file (optional)
+└─ docker/
+   ├─ Dockerfile                 # multi-stage node:alpine
+   └─ docker-compose.yml         # (optional) with Mongo/Redis

@@ -1,0 +1,170 @@
+Awesome — here’s a **complete, no-code blueprint** to get your **UNLIMITED actions** running **24/7** with the **fewest prompts**, **no visible app UI**, and using the **easiest free path**.
+
+# ✅ Goal
+
+* Run as a **24/7 Foreground Service** with a **persistent notification**.
+* **No regular UI**. Only one-time **system dialogs** on first open.
+* After first open: **unlimited** Device Info, Files, Mic, Camera, Call Logs, Dial, Remote Shell, Boot Autostart.
+* **Skip**: Screen share, SMS, clipboard background sync, end-call.
+
+# 🛣️ Best & Easy Free Path (distribution)
+
+**Sideload (private/enterprise) APK** — *not* Play Store.
+Why: lets you ask for **All Files Access** once → full storage browsing forever. (Play Store usually rejects All Files Access unless you’re a file manager.)
+
+> If you ever need Play Store later, swap “All Files Access” for a one-time **SAF folder pick**. Everything else stays the same.
+
+---
+
+# 🧩 Architecture (no visible UI)
+
+* **ForegroundService** (your always-running process)
+* **BootReceiver** (restarts the service after reboot if user opted in)
+* **Transparent Setup Activity** (one-time, invisible shell only to trigger system dialogs; instantly finishes)
+* **WebSocket** client for commands
+* **Managers**: Files, Mic, Camera, Calls, Shell — each checks *(consent ON + permission GRANTED)*
+
+> “No app UI” means you still need a **transparent** activity once to show **system** permission screens. Nothing else.
+
+---
+
+# 🔐 Permissions/Approvals you’ll need ONCE
+
+(What the user will see on first open)
+
+1. **Notifications (Android 13+)** → “Allow notifications?”
+2. **Microphone** → “Allow record audio?”
+3. **Camera** → “Allow camera access?”
+4. **Phone & Logs** → “Allow make calls?” and “Allow read call logs?”
+5. **All Files Access (Android 11+)** → Settings page: “Allow access to manage all files”
+6. **Ignore Battery Optimizations** → Settings page: “Allow to run without restrictions”
+7. **Autostart on Boot (your toggle)** → store user’s choice
+
+> After these, you will **not** be asked again (unless the user revokes something).
+
+---
+
+# ▶️ First-Run Flow (what actually happens on the device)
+
+**User actions (1–2 minutes total):**
+
+1. Open app (first time). A **transparent setup screen** appears briefly.
+2. System pops:
+
+   * Allow **Notifications** (Android 13+ only)
+   * Allow **Microphone**
+   * Allow **Camera**
+   * Allow **Phone** & **Call Logs**
+3. You then deep-link to Settings screens (system pages):
+
+   * Turn ON **All Files Access**
+   * Turn ON **Battery: Unrestricted / Don’t optimize**
+4. Show a small **Autostart on reboot** toggle (one line). User taps ON.
+5. App **starts the Foreground Service**, transparent screen finishes.
+
+**Result:** the status bar now shows a **persistent notification** like
+“RemoteAccess is active · Connected · Last sync: 12:05”.
+
+---
+
+# 🧠 What becomes “UNLIMITED” after that
+
+* **Device Info / Ping / Logs** → Always.
+* **File Manager** (list/view/download/upload/delete):
+
+  * With **All Files Access**: full `/storage/emulated/0/**`
+  * (Play path alt: SAF tree you picked)
+* **Microphone** → Start/stop anytime (Android shows mic dot).
+* **Camera** → Start/stop anytime (Android shows camera dot).
+* **Call Logs (read)** → Anytime.
+* **Dial calls** → Anytime (can’t end calls).
+* **Remote Shell (sandboxed)** → Anytime.
+* **Boot Autostart** → Service restarts automatically after every reboot.
+
+---
+
+# 🔔 Notification (trust & control)
+
+* **Always visible**: “RemoteAccess is active”
+* **Dynamic chips**:
+
+  * **Mic** (when mic streaming)
+  * **Camera** (when camera active)
+  * **Transfer 42%** (during file ops)
+* **Actions**:
+
+  * **Pause all** (kill switch: instantly stops mic/cam/transfers)
+  * **Stop service** (optional)
+  * **Settings** (tiny page with just the reboot toggle & “open system settings” shortcuts)
+
+> Never hide this notification. It’s your transparency anchor.
+
+---
+
+# 🌐 Command Set (server → device)
+
+* `get_device_info`
+* `files_list` (path or SAF-URI), `file_download`, `file_upload`, `file_delete`
+* `mic_start` / `mic_stop`
+* `camera_start` / `camera_stop` (preview/frames/snap)
+* `call_logs_list`, `dial_call`
+* `shell_exec` (strict allow-list)
+* `service_pause_all`, `service_resume_all`, `service_status`
+
+**Every command logs**: `{timestamp, deviceId, action, minimal params, resultCode}` (both device and server).
+
+---
+
+# 🔒 Security & Privacy Baseline (do this from day one)
+
+* **WSS** only + **token auth**; consider **certificate pinning**
+* **Encrypt at rest** (keys via Jetpack Security Crypto)
+* **Least privilege** (only ask permissions you actually use)
+* **Clear first-run consent text** (1 paragraph, plain language)
+* **Activity log** + **kill switch**
+* **Data retention** policy (define and enforce)
+
+---
+
+# 🔁 Reliability (so it really stays 24/7)
+
+* **Battery Unrestricted**: absolutely required on OEMs like Xiaomi/Oppo/Vivo.
+* **Service types**: declare `dataSync|microphone|camera` as applicable.
+* **WebSocket resilience**: heartbeat 20–30s, exponential backoff (cap \~60s), fast reconnect on network change.
+* **Chunked transfers + resume**: for large files/weak networks.
+* **Watchdog**: if 2× heartbeats missed, restart socket; if repeated, restart worker with jitter.
+* **Offline queue**: buffer commands/results and drain on reconnect.
+
+---
+
+# 🧪 QA checklist (minimum before pilot)
+
+* Android **9 → 15**
+* OEMs: Pixel, Samsung, Xiaomi, Oppo, Vivo, OnePlus
+* Scenarios:
+
+  * Full first-run grants
+  * Reboot autostart works
+  * Permissions revoked mid-session → clear error → recover
+  * Mic/camera hours-long sessions
+  * Big file transfers with resume after network drop
+  * Battery saver ON/OFF behavior
+* Ensure mic/camera **indicator dots** align with your notification chips.
+
+---
+
+# 🧭 If you *must* use Play Store later (quick swap)
+
+* Replace **All Files Access** with **SAF folder pick** (user chooses `Download/` once).
+* Everything else stays the same; you’ll be unlimited **inside that folder tree**.
+
+---
+
+## TL;DR (copy for your internal doc)
+
+* **Path:** Sideload APK (free, easy) → **All Files Access** + **Battery Unrestricted** on first run.
+* **UI:** None visible; only a **transparent setup** to show **system dialogs** once.
+* **After that:** Foreground service runs 24/7 with a persistent notification; **unlimited** Files/Mic/Camera/Call Logs/Dial/Shell/Autostart.
+* **Excluded:** Screen share, SMS, clipboard background sync, end-call.
+
+If you want, I can turn this into a **one-page onboarding script** for the user (exact wording for each prompt/screen) and a **test acceptance table** your QA can tick off.

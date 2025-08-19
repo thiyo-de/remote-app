@@ -1,0 +1,62 @@
+Understood 👍 — let’s focus **only** on the actions you can run **unlimitedly** (24/7, ForegroundService, no repeat prompts after first approval). Forget the restricted ones (screen share, SMS, clipboard, end calls).
+
+---
+
+# ✅ **Unlimited Actions List**
+
+### 📡 Device Info / Ping / Logs
+
+* No runtime prompt (just `INTERNET` in manifest).
+* Unlimited access after install.
+
+### 📂 File Manager (View / Download / Upload / Delete)
+
+* **Android ≤10:** one-time storage permission → unlimited.
+* **Android 11+:**
+
+  * **All Files Access (MANAGE\_EXTERNAL\_STORAGE)** → one-time Settings approval → unlimited full storage.
+  * or **SAF (Scoped Access Framework)** → one-time folder pick → unlimited inside that folder.
+
+### 🎙️ Microphone Streaming
+
+* One-time `RECORD_AUDIO` runtime permission.
+* After that, you can start/stop mic freely under ForegroundService (user sees mic dot + your persistent notification).
+
+### 📸 Camera (Preview / Photo / Stream)
+
+* One-time `CAMERA` runtime permission.
+* After that, start/stop camera freely under ForegroundService (user sees camera dot + your notification).
+
+### 📞 Call Logs (Read)
+
+* One-time `READ_CALL_LOG` permission.
+* Unlimited log access afterwards.
+
+### 📞 Dial Outgoing Calls
+
+* One-time `CALL_PHONE` permission.
+* Unlimited dialing afterwards (cannot *end* calls — blocked by Android).
+
+### 🔐 Remote Shell (inside app sandbox)
+
+* Needs only `INTERNET`.
+* Unlimited use.
+
+### ♻️ Boot Autostart
+
+* Needs `RECEIVE_BOOT_COMPLETED` + user toggle once.
+* Then service restarts on every boot automatically.
+
+### 🔋 Battery Optimization Exemption
+
+* One-time Settings approval.
+* Ensures ForegroundService is not killed, enabling true 24/7 run.
+
+---
+
+✅ So your **UNLIMITED ACTIONS** are:
+**Device Info, File Manager, Microphone, Camera, Call Logs, Dial Calls, Remote Shell, Boot Autostart, Battery Exemption.**
+
+---
+
+👉 Do you want me to now map these **unlimited actions against distribution paths** (Play Store vs. Sideload vs. MDM), so you know exactly which path supports which action without trouble?

