@@ -1,0 +1,21 @@
+﻿{
+  "name": "remoteaccessserver",
+  "version": "0.1.0",
+  "description": "Backend for RemoteAccessApp: REST -> WebSocket router",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "lint": "echo (no linter configured)"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "ws": "^8.18.0",
+    "morgan": "^1.10.0",
+    "helmet": "^7.0.0",
+    "uuid": "^9.0.1"
+  }
+}

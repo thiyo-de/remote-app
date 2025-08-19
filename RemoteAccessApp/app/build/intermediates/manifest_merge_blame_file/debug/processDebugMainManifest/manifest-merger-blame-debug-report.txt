@@ -10,41 +10,41 @@
 10
 11    <!-- Core capabilities -->
 12    <uses-permission android:name="android.permission.INTERNET" />
-12-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:8:5-66
-12-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:8:22-64
+12-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:7:5-66
+12-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:7:22-64
 13    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-13-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:9:5-76
-13-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:9:22-74
+13-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:8:5-76
+13-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:8:22-74
 14    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-14-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:10:5-80
-14-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:10:22-78
+14-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:9:5-80
+14-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:9:22-78
 15
-16    <!-- Runtime permissions you’ll ask on first run -->
+16    <!-- Runtime permissions you will ask on first run -->
 17    <uses-permission android:name="android.permission.RECORD_AUDIO" />
-17-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:13:5-70
-17-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:13:22-68
+17-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:12:5-70
+17-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:12:22-68
 18    <uses-permission android:name="android.permission.CAMERA" />
-18-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:14:5-64
-18-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:14:22-62
+18-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:13:5-64
+18-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:13:22-62
 19    <uses-permission android:name="android.permission.CALL_PHONE" />
-19-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:15:5-68
-19-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:15:22-66
+19-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:14:5-68
+19-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:14:22-66
 20    <uses-permission android:name="android.permission.READ_CALL_LOG" />
-20-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:16:5-71
-20-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:16:22-69
+20-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:15:5-71
+20-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:15:22-69
 21    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-21-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:17:5-76
-21-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:17:22-74
+21-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:16:5-76
+21-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:16:22-74
 22
-23    <!-- Full storage access (user approves in Settings on Android 11+) -->
+23    <!-- Full storage access (user must approve in Settings on Android 11+) -->
 24    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
-24-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:20:5-22:39
-24-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:21:9-66
+24-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:19:5-21:39
+24-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:20:9-66
 25
-26    <!-- OPTIONAL (only if you keep the wakelock in RemoteService) -->
+26    <!-- OPTIONAL (only if you keep the wakelock code) -->
 27    <uses-permission android:name="android.permission.WAKE_LOCK" />
-27-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:25:5-67
-27-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:25:22-65
+27-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:24:5-67
+27-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:24:22-65
 28
 29    <permission
 29-->[androidx.core:core:1.13.1] C:\Users\ADMIN\.gradle\caches\transforms-4\10cee5879b18c42f1dc4e342ba45bf06\transformed\core-1.13.1\AndroidManifest.xml:22:5-24:47
@@ -58,76 +58,76 @@
 33-->[androidx.core:core:1.13.1] C:\Users\ADMIN\.gradle\caches\transforms-4\10cee5879b18c42f1dc4e342ba45bf06\transformed\core-1.13.1\AndroidManifest.xml:26:22-94
 34
 35    <application
-35-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:27:5-65:19
+35-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:26:5-64:19
 36        android:allowBackup="false"
-36-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:28:9-36
+36-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:27:9-36
 37        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
 37-->[androidx.core:core:1.13.1] C:\Users\ADMIN\.gradle\caches\transforms-4\10cee5879b18c42f1dc4e342ba45bf06\transformed\core-1.13.1\AndroidManifest.xml:28:18-86
 38        android:debuggable="true"
 39        android:extractNativeLibs="false"
 40        android:icon="@mipmap/ic_launcher"
-40-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:30:9-43
+40-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:29:9-43
 41        android:label="RemoteAccessApp"
-41-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:29:9-40
+41-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:28:9-40
 42        android:networkSecurityConfig="@xml/network_security_config"
-42-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:32:9-69
-43        android:usesCleartextTraffic="false" >
-43-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:31:9-45
+42-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:31:9-69
+43        android:usesCleartextTraffic="true" >
+43-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:30:9-44
 44
-45        <!-- Launcher entry (for convenience). This starts SetupActivity. -->
+45        <!-- Launcher entry (convenience) -->
 46        <activity
-46-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:35:9-43:20
+46-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:34:9-42:20
 47            android:name="com.remoteaccess.SetupActivity"
-47-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:36:13-58
+47-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:35:13-58
 48            android:exported="true"
-48-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:37:13-36
+48-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:36:13-36
 49            android:theme="@style/Theme.Transparent" >
-49-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:38:13-53
+49-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:37:13-53
 50            <intent-filter>
-50-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:39:13-42:29
+50-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:38:13-41:29
 51                <action android:name="android.intent.action.MAIN" />
-51-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:40:17-68
-51-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:40:25-66
+51-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:39:17-68
+51-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:39:25-66
 52
 53                <category android:name="android.intent.category.LAUNCHER" />
-53-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:41:17-76
-53-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:41:27-74
+53-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:40:17-76
+53-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:40:27-74
 54            </intent-filter>
 55        </activity>
 56
-57        <!-- Foreground service (direct-boot aware; posts notif immediately) -->
+57        <!-- Foreground service -->
 58        <service
-58-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:46:9-51:55
+58-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:45:9-50:55
 59            android:name="com.remoteaccess.RemoteService"
-59-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:47:13-58
+59-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:46:13-58
 60            android:directBootAware="true"
-60-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:50:13-43
+60-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:49:13-43
 61            android:enabled="true"
-61-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:48:13-35
+61-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:47:13-35
 62            android:exported="false"
-62-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:49:13-37
+62-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:48:13-37
 63            android:foregroundServiceType="dataSync" />
-63-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:51:13-53
+63-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:50:13-53
 64
-65        <!-- Boot receiver (handles both locked + unlocked boot; slight delay) -->
+65        <!-- Boot receiver -->
 66        <receiver
-66-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:54:9-63:20
+66-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:53:9-62:20
 67            android:name="com.remoteaccess.BootReceiver"
-67-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:55:13-57
+67-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:54:13-57
 68            android:directBootAware="true"
-68-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:58:13-43
+68-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:57:13-43
 69            android:enabled="true"
-69-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:56:13-35
+69-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:55:13-35
 70            android:exported="true" >
-70-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:57:13-36
+70-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:56:13-36
 71            <intent-filter>
-71-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:59:13-62:29
+71-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:58:13-61:29
 72                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
-72-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:60:17-85
-72-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:60:25-83
+72-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:59:17-85
+72-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:59:25-83
 73                <action android:name="android.intent.action.BOOT_COMPLETED" />
-73-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:61:17-78
-73-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:61:25-76
+73-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:60:17-78
+73-->E:\Remote-App\RemoteAccessApp\app\src\main\AndroidManifest.xml:60:25-76
 74            </intent-filter>
 75        </receiver>
 76
