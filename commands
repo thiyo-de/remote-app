@@ -1,0 +1,22 @@
+adb uninstall com.remoteaccess
+
+.\gradlew assembleDebug
+
+adb install -r app\build\outputs\apk\debug\app-debug.apk
+
+. .\ra-shell.ps1
+
+ra-status
+# or:
+(Invoke-RestMethod http://localhost:8080/api/devices).devices
+
+ra-pwd
+
+ra-ls
+
+ra-connect 6275fc436dd7c033
+# or, if you stored it in a variable:
+$did = "6275fc436dd7c033"
+ra-connect "$did"
+
+ra-get "screenshot-2025-7-26-16-3-56.png" "E:\remote-app source\New folder\"
