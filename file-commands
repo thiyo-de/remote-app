@@ -1,0 +1,133 @@
+Perfect 👍 now that your **RemoteAccessApp** has **file access working**, here’s a clean list of **all actions/commands you can perform** from the PC side via PowerShell (`ra-*` helpers).
+
+---
+
+# 📜 **RemoteAccessApp – File Access Commands**
+
+### 🔎 **Explore**
+
+* **List available storage roots** (internal, external SD, USB OTG):
+
+  ```powershell
+  ra-roots
+  ```
+
+  ➝ Example output:
+  `/storage/emulated/0` (Internal)
+  `/storage/1234-5678` (SD Card)
+
+* **List directory contents**:
+
+  ```powershell
+  ra-ls "/storage/emulated/0/Download"
+  ```
+
+---
+
+### 📂 **Read / Download**
+
+* **Get file details + small file content (text, base64)**:
+
+  ```powershell
+  ra-cat "/storage/emulated/0/Documents/test.txt"
+  ```
+
+* **Download a single file (any type: img, video, pdf, song, apk)**:
+
+  ```powershell
+  ra-get "/storage/emulated/0/Download/app.apk" "E:\phone-backup\app.apk"
+  ```
+
+* **Download a full directory (recursive backup)**:
+
+  ```powershell
+  ra-getdir "/storage/emulated/0/DCIM/Camera" "E:\phone-backup\Camera"
+  ```
+
+  🔹 With `-SkipAndroid` (avoid `/Android/data` + `/Android/obb`):
+
+  ```powershell
+  ra-getdir "/storage/emulated/0" "E:\phone-backup" -SkipAndroid
+  ```
+
+  🔹 Without `-SkipAndroid` (include Android app data):
+
+  ```powershell
+  ra-getdir "/storage/emulated/0" "E:\phone-backup"
+  ```
+
+* **Download from external storage (SD card / USB)**:
+
+  ```powershell
+  ra-getdir "/storage/1234-5678" "E:\phone-backup\sdcard"
+  ```
+
+---
+
+### 🗑 **Delete**
+
+* **Delete a file**:
+
+  ```powershell
+  ra-rm "/storage/emulated/0/Download/test.txt"
+  ```
+
+* **Delete a directory (recursive)**:
+
+  ```powershell
+  ra-rmdir "/storage/emulated/0/Download/OldStuff"
+  ```
+
+---
+
+### 📤 **Upload / Write**
+
+* **Upload a file from PC → Phone**:
+
+  ```powershell
+  ra-put "E:\installer.apk" "/storage/emulated/0/Download/installer.apk"
+  ```
+
+* **Create a new directory**:
+
+  ```powershell
+  ra-mkdir "/storage/emulated/0/MyNewFolder"
+  ```
+
+* **Write text to a file (create or overwrite)**:
+
+  ```powershell
+  "hello world" | ra-write "/storage/emulated/0/notes.txt"
+  ```
+
+---
+
+### ⚡ **Special**
+
+* **Check info about storage/file system**:
+
+  ```powershell
+  ra-stat "/storage/emulated/0/Download/app.apk"
+  ```
+
+  ➝ returns size, modified time, type.
+
+* **Search for files by name** (planned if you want):
+
+  ```powershell
+  ra-find "/storage/emulated/0" "WhatsApp"
+  ```
+
+---
+
+✅ With these, you can now:
+
+* **Explore** (`ra-roots`, `ra-ls`)
+* **Backup/Download** (`ra-get`, `ra-getdir`)
+* **Upload** (`ra-put`, `ra-mkdir`, `ra-write`)
+* **Delete/Manage** (`ra-rm`, `ra-rmdir`)
+* **Inspect** (`ra-stat`)
+
+---
+
+👉 Do you want me to add a **ready-made `ra-help` command** that prints this entire cheat-sheet directly in PowerShell whenever you forget?
