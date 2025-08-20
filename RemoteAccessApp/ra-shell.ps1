@@ -1,8 +1,8 @@
 # =========================
 # RemoteAccess PS Mini Shell (PowerShell 5 compatible)
 # =========================
-$global:raApiBase = "http://localhost:8080/api"
-$global:raDeviceId = $null
+$global:raApiBase     = "http://localhost:8080/api"
+$global:raDeviceId    = $null
 $global:raCurrentPath = "/storage/emulated/0"
 
 # ---------------- Core plumbing ----------------
@@ -13,9 +13,8 @@ function Get-RaDevices {
         $dev = $resp.devices
         if ($null -eq $dev) { return @() }
         if ($dev -is [System.Array]) { return $dev }
-        return @($dev)  # coerce single string to array
-    }
-    catch {
+        return @($dev)
+    } catch {
         Write-Error "Cannot reach server at $($global:raApiBase). $_"
         return @()
     }
@@ -37,7 +36,7 @@ function Initialize-RaSession {
 function Send-DeviceCommand {
     param(
         [string]$DeviceId,
-        [Parameter(Mandatory = $true)][string]$Action,
+        [Parameter(Mandatory=$true)][string]$Action,
         [hashtable]$Params
     )
     if (-not $DeviceId) { $DeviceId = $global:raDeviceId }
@@ -51,8 +50,7 @@ function Send-DeviceCommand {
             -Uri "$($global:raApiBase)/command/$DeviceId" `
             -ContentType "application/json" `
             -Body ($body | ConvertTo-Json -Depth 10)
-    }
-    catch {
+    } catch {
         throw "Command failed ($Action): $_"
     }
 }
@@ -72,20 +70,17 @@ function Normalize-PathUnix([string]$Path) {
     $parts = @()
     foreach ($p in $Path -split "/") {
         if ($p -eq "" -or $p -eq ".") { continue }
-        if ($p -eq "..") {
-            if ($parts.Count -gt 0) { $parts = $parts[0..($parts.Count - 2)] }
-            continue
-        }
+        if ($p -eq "..") { if ($parts.Count -gt 0) { $parts = $parts[0..($parts.Count-2)] }; continue }
         $parts += $p
     }
     return "/" + ($parts -join "/")
 }
 
-# Build a safe local path under $BaseDir using a *remote* child path (sanitize Windows-illegal chars)
+# Build a safe local path under $BaseDir using a remote child path (sanitize Windows-illegal chars)
 function New-RaSafeChildPath {
     param(
-        [Parameter(Mandatory = $true)][string]$BaseDir,
-        [Parameter(Mandatory = $true)][string]$ChildRelativeUnix  # e.g. "Pictures/foo.jpg" or "/storage/emulated/0/Pictures/foo.jpg"
+        [Parameter(Mandatory=$true)][string]$BaseDir,
+        [Parameter(Mandatory=$true)][string]$ChildRelativeUnix
     )
     $rel = $ChildRelativeUnix -replace '^[\\/]+', '' -replace '/', '\'
     $segments = $rel -split '\\'
@@ -93,8 +88,8 @@ function New-RaSafeChildPath {
     $sanitized = @()
     foreach ($seg in $segments) {
         if ([string]::IsNullOrWhiteSpace($seg)) { continue }
-        $seg = ($seg -replace '[<>:"/\\|?*]', '_')  # illegal on Windows
-        $seg = $seg.TrimEnd('.', ' ')                # trailing dot/space not allowed
+        $seg = ($seg -replace '[<>:"/\\|?*]', '_')
+        $seg = $seg.TrimEnd('.', ' ')
         if ($seg.Length -eq 0) { $seg = '_' }
         $sanitized += $seg
     }
@@ -106,14 +101,26 @@ function New-RaSafeChildPath {
 
 function Save-RaBytes {
     param(
-        [Parameter(Mandatory = $true)][string]$Path,
-        [Parameter(Mandatory = $true)][byte[]]$Bytes
+        [Parameter(Mandatory=$true)][string]$Path,
+        [Parameter(Mandatory=$true)][byte[]]$Bytes
     )
     $dir = [System.IO.Path]::GetDirectoryName($Path)
     if (-not [System.IO.Directory]::Exists($dir)) {
         [System.IO.Directory]::CreateDirectory($dir) | Out-Null
     }
     [System.IO.File]::WriteAllBytes($Path, $Bytes)
+}
+
+# --- Windows filename sanitizer (for downloads)
+function Sanitize-Name([string]$name) {
+    if ($null -eq $name) { return "_" }
+    $bad = [IO.Path]::GetInvalidFileNameChars() -join ''
+    $re = "[{0}]" -f [regex]::Escape($bad)
+    $clean = [regex]::Replace($name, $re, "_")
+    $clean = $clean.TrimEnd(" ", ".")
+    if ($clean -match '^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$') { $clean = "_$clean" }
+    if ([string]::IsNullOrWhiteSpace($clean)) { $clean = "_" }
+    return $clean
 }
 
 # ---------------- Shell-like UX ----------------
@@ -148,13 +155,10 @@ function ra-cd {
     param([string]$Dir)
     Initialize-RaSession
     if (-not $Dir) { return }
-
     $candidate = if ($Dir.StartsWith("/")) { $Dir } else { Join-PathUnix $global:raCurrentPath $Dir }
     $candidate = Normalize-PathUnix $candidate
-
     $resp = Send-DeviceCommand -Action "list_files" -Params @{ path = $candidate }
     if ($resp.error) { Write-Host "cd: $($resp.error)" -ForegroundColor Red; return }
-
     $global:raCurrentPath = $candidate
     Write-Host $global:raCurrentPath -ForegroundColor Yellow
 }
@@ -162,136 +166,177 @@ function ra-cd {
 function ra-ls {
     param([string]$Path)
     Initialize-RaSession
-
-    $target = if ($Path) {
-        if ($Path.StartsWith("/")) { $Path } else { Join-PathUnix $global:raCurrentPath $Path }
+    if ($Path) {
+        if ($Path.StartsWith("/")) { $target = $Path } else { $target = Join-PathUnix $global:raCurrentPath $Path }
+    } else {
+        $target = $global:raCurrentPath
     }
-    else {
-        $global:raCurrentPath
-    }
-
     $resp = Send-DeviceCommand -Action "list_files" -Params @{ path = $target }
     if ($resp.error) { Write-Host "ls: $($resp.error)" -ForegroundColor Red; return }
-
     $items = $resp.result
     if (-not $items -or $items.Count -eq 0) { Write-Host "(empty)"; return }
-
     $items |
-    Sort-Object @{Expression = "isDir"; Descending = $true }, @{Expression = "name"; Descending = $false } |
-    ForEach-Object {
+      Sort-Object @{Expression="isDir";Descending=$true}, @{Expression="name";Descending=$false} |
+      ForEach-Object {
         if ($_.isDir) {
             Write-Host ("[DIR] {0}" -f $_.name) -ForegroundColor Cyan
-        }
-        else {
+        } else {
             $kb = [math]::Round(($_.size / 1KB), 1)
             Write-Host ("      {0}  ({1} KB)" -f $_.name, $kb)
         }
-    }
+      }
 }
 
 # ---------------- File viewing/downloading ----------------
 
 function ra-cat {
-    param([Parameter(Mandatory = $true)][string]$Path)
-
+    param([Parameter(Mandatory=$true)][string]$Path)
     Initialize-RaSession
-    $target = if ($Path.StartsWith("/")) { $Path } else { Join-PathUnix $global:raCurrentPath $Path }
+    if ($Path.StartsWith("/")) { $target = $Path } else { $target = Join-PathUnix $global:raCurrentPath $Path }
     $resp = Send-DeviceCommand -Action "read_file" -Params @{ path = $target }
     if ($resp.error) { Write-Host "cat: $($resp.error)" -ForegroundColor Red; return }
-
     try {
         $bytes = [Convert]::FromBase64String([string]$resp.result.base64)
-        $text = [System.Text.Encoding]::UTF8.GetString($bytes)
+        $text  = [System.Text.Encoding]::UTF8.GetString($bytes)
         Write-Output $text
-    }
-    catch {
+    } catch {
         Write-Host "(binary file)" -ForegroundColor DarkGray
     }
 }
 
 function ra-get {
     param(
-        [Parameter(Mandatory = $true)][string]$RemotePath,
+        [Parameter(Mandatory=$true)][string]$RemotePath,
         [string]$OutFile
     )
-
     Initialize-RaSession
-    $target = if ($RemotePath.StartsWith("/")) { $RemotePath } else { Join-PathUnix $global:raCurrentPath $RemotePath }
+    if ($RemotePath.StartsWith("/")) { $target = $RemotePath } else { $target = Join-PathUnix $global:raCurrentPath $RemotePath }
     $resp = Send-DeviceCommand -Action "read_file" -Params @{ path = $target }
     if ($resp.error) { Write-Host "get: $($resp.error)" -ForegroundColor Red; return }
 
-    # --- Choose output filename ---
-    $finalPath = if ($OutFile) { $OutFile } else { $resp.result.name }
+    $leafFromDevice = if ($resp.result.name) { [string]$resp.result.name } else { [IO.Path]::GetFileName($RemotePath) }
+    if ([string]::IsNullOrWhiteSpace($leafFromDevice)) { $leafFromDevice = "download.bin" }
+    $safeLeaf = Sanitize-Name $leafFromDevice
 
-    # --- Ensure directory exists ---
-    $dirOnly = [System.IO.Path]::GetDirectoryName($finalPath)
-    if ($dirOnly -and -not (Test-Path -LiteralPath $dirOnly)) {
-        New-Item -ItemType Directory -Path $dirOnly -Force | Out-Null
+    if ($OutFile) { $finalPath = $OutFile } else { $finalPath = (Join-Path -Path (Get-Location) -ChildPath $safeLeaf) }
+    $looksLikeDir = (Test-Path -LiteralPath $finalPath -PathType Container) -or ($finalPath -match '[\\/]\s*$')
+    if ($looksLikeDir) {
+        $trimmed = $finalPath.TrimEnd('\','/')
+        if (-not (Test-Path -LiteralPath $trimmed -PathType Container)) {
+            New-Item -ItemType Directory -Force -Path $trimmed | Out-Null
+        }
+        $finalPath = Join-Path -Path $trimmed -ChildPath $safeLeaf
+    } else {
+        $parent = [IO.Path]::GetDirectoryName($finalPath)
+        if ($parent -and -not (Test-Path -LiteralPath $parent -PathType Container)) {
+            New-Item -ItemType Directory -Force -Path $parent | Out-Null
+        }
     }
 
-    # --- Write file safely ---
-    $bytes = [Convert]::FromBase64String($resp.result.base64)
+    $b64 = [string]$resp.result.base64
+    if ([string]::IsNullOrWhiteSpace($b64)) { Write-Warning "Device returned empty data for $target"; return }
+    $bytes = [Convert]::FromBase64String($b64)
     [IO.File]::WriteAllBytes($finalPath, $bytes)
     Write-Host ("saved → {0} ({1} bytes)" -f $finalPath, $bytes.Length) -ForegroundColor Green
 }
 
-function ra-getdir {
-    param(
-        [Parameter(Mandatory = $true)][string]$RemoteDir,
-        [Parameter(Mandatory = $true)][string]$OutDir,
-        [switch]$SkipAndroid
-    )
+# ---------------- Writing / Uploading / Deleting ----------------
+# (These match Android actions: mkdirs, write_file, delete_file, delete_dir)
 
+function ra-mkdir {
+    param([Parameter(Mandatory=$true)][string]$RemoteDir)
     Initialize-RaSession
-    $resp = Send-DeviceCommand -Action "list_files" -Params @{ path = $RemoteDir }
-    if ($resp.error) { Write-Host "ls: $($resp.error)" -ForegroundColor Red; return }
-
-    foreach ($item in $resp.result) {
-        $localPath = Join-Path $OutDir $item.name
-        $remotePath = Join-PathUnix $RemoteDir $item.name
-
-        if ($item.isDir) {
-            if ($SkipAndroid -and $item.name -eq "Android") { continue }
-            if (-not (Test-Path -LiteralPath $localPath)) {
-                New-Item -ItemType Directory -Path $localPath -Force | Out-Null
-            }
-            ra-getdir $remotePath $localPath -SkipAndroid:$SkipAndroid
-        }
-        else {
-            try {
-                ra-get $remotePath $localPath
-            }
-            catch {
-                Write-Host "save failed → $localPath" -ForegroundColor Red
-            }
-        }
-    }
+    if ($RemoteDir.StartsWith("/")) { $target = $RemoteDir } else { $target = Join-PathUnix $global:raCurrentPath $RemoteDir }
+    $resp = Send-DeviceCommand -Action "mkdirs" -Params @{ path = $target }
+    if ($resp.error) { Write-Host "mkdir: $($resp.error)" -ForegroundColor Red; return }
+    Write-Host "created → $target" -ForegroundColor Green
 }
 
+function ra-write {
+    param(
+        [Parameter(Mandatory=$true)][string]$RemoteFile,
+        [Parameter(Mandatory=$true)][string]$Text,
+        [switch]$Append
+    )
+    Initialize-RaSession
+    if ($RemoteFile.StartsWith("/")) { $target = $RemoteFile } else { $target = Join-PathUnix $global:raCurrentPath $RemoteFile }
+    $bytes  = [System.Text.Encoding]::UTF8.GetBytes($Text)
+    $b64    = [Convert]::ToBase64String($bytes)
+    $resp = Send-DeviceCommand -Action "write_file" -Params @{ path = $target; base64 = $b64; append = [bool]$Append }
+    if ($resp.error) { Write-Host "write: $($resp.error)" -ForegroundColor Red; return }
+    Write-Host ("wrote → {0} ({1} bytes)" -f $target, $bytes.Length) -ForegroundColor Green
+}
 
-# Recursive directory pull (any file types). Optional filters.
+function ra-put {
+    param(
+        [Parameter(Mandatory=$true)][string]$LocalFile,
+        [string]$RemotePath
+    )
+    Initialize-RaSession
+    if (-not (Test-Path -LiteralPath $LocalFile -PathType Leaf)) { Write-Host "put: local file not found" -ForegroundColor Red; return }
+    $bytes = [IO.File]::ReadAllBytes((Resolve-Path -LiteralPath $LocalFile))
+    $b64   = [Convert]::ToBase64String($bytes)
+
+    $leaf = [IO.Path]::GetFileName($LocalFile)
+
+    if ($RemotePath) {
+        $rp = $RemotePath
+        $isDirHint = ($rp -match '[\\/]\s*$')
+        if ($isDirHint) { $rp = $rp.TrimEnd('\','/') }
+        if ($rp.StartsWith("/")) { $baseRemote = $rp } else { $baseRemote = Join-PathUnix $global:raCurrentPath $rp }
+        if ($isDirHint) { $target = Join-PathUnix $baseRemote $leaf } else { $target = $baseRemote }
+    } else {
+        $target = Join-PathUnix $global:raCurrentPath $leaf
+    }
+
+    $resp = Send-DeviceCommand -Action "write_file" -Params @{ path = $target; base64 = $b64; append = $false }
+    if ($resp.error) { Write-Host "put: $($resp.error)" -ForegroundColor Red; return }
+    Write-Host ("uploaded → {0} ({1} bytes)" -f $target, $bytes.Length) -ForegroundColor Green
+}
+
+function ra-rm {
+    param([Parameter(Mandatory=$true)][string]$RemoteFile)
+    Initialize-RaSession
+    if ($RemoteFile.StartsWith("/")) { $target = $RemoteFile } else { $target = Join-PathUnix $global:raCurrentPath $RemoteFile }
+    $resp = Send-DeviceCommand -Action "delete_file" -Params @{ path = $target }
+    if ($resp.error) { Write-Host "rm: $($resp.error)" -ForegroundColor Red; return }
+    Write-Host "deleted file → $target" -ForegroundColor Green
+}
+
+function ra-rmdir {
+    param(
+        [Parameter(Mandatory=$true)][string]$RemoteDir,
+        [switch]$Recursive
+    )
+    Initialize-RaSession
+    if ($RemoteDir.StartsWith("/")) { $target = $RemoteDir } else { $target = Join-PathUnix $global:raCurrentPath $RemoteDir }
+    $resp = Send-DeviceCommand -Action "delete_dir" -Params @{ path = $target; recursive = [bool]$Recursive }
+    if ($resp.error) { Write-Host "rmdir: $($resp.error)" -ForegroundColor Red; return }
+    Write-Host ("deleted dir → {0}" -f $target) -ForegroundColor Green
+}
+
+# ---------------- Recursive directory pull (any file types) ----------------
 function ra-getdir {
     param(
-        [Parameter(Mandatory = $true)][string]$RemoteDir,
-        [Parameter(Mandatory = $true)][string]$LocalDir,
-        [string[]]$Include,      # e.g. '*.jpg','*.mp4'
-        [string[]]$Exclude,      # e.g. '*.tmp','*.nomedia'
-        [switch]$SkipAndroid,    # skip /Android subtree
+        [Parameter(Mandatory=$true)][string]$RemoteDir,
+        [Parameter(Mandatory=$true)][string]$LocalDir,
+        [string[]]$Include,
+        [string[]]$Exclude,
+        [switch]$SkipAndroid,
         [int]$MaxDepth = 99
     )
 
     Initialize-RaSession
 
-    $rootRemote = if ($RemoteDir.StartsWith("/")) { $RemoteDir } else { Join-PathUnix $global:raCurrentPath $RemoteDir }
-    $LocalDir = [System.IO.Path]::GetFullPath($LocalDir)
-    if (-not [System.IO.Directory]::Exists($LocalDir)) { [System.IO.Directory]::CreateDirectory($LocalDir) | Out-Null }
-
-    function Test-Match {
-        param([string]$Name, [string[]]$Patterns)
+    function Test-Match { param([string]$Name, [string[]]$Patterns)
         if (-not $Patterns -or $Patterns.Count -eq 0) { return $true }
         foreach ($p in $Patterns) { if ($Name -like $p) { return $true } }
         return $false
     }
+
+    if ($RemoteDir.StartsWith("/")) { $rootRemote = $RemoteDir } else { $rootRemote = Join-PathUnix $global:raCurrentPath $RemoteDir }
+    $LocalDir = [System.IO.Path]::GetFullPath($LocalDir)
+    if (-not [System.IO.Directory]::Exists($LocalDir)) { [System.IO.Directory]::CreateDirectory($LocalDir) | Out-Null }
 
     $probe = Send-DeviceCommand -Action "list_files" -Params @{ path = $rootRemote }
     if ($probe.error) { Write-Host "getdir: $($probe.error)" -ForegroundColor Red; return }
@@ -319,7 +364,6 @@ function ra-getdir {
             $remoteChild = Join-PathUnix $cur $it.name
 
             if ($it.isDir) {
-                # depth check
                 $relDepth = ($remoteChild -replace [regex]::Escape($rootRemote), '') -split '/' | Where-Object { $_ -ne '' }
                 if ($relDepth.Count -le $MaxDepth) { $q.Enqueue($remoteChild) }
                 continue
@@ -338,8 +382,7 @@ function ra-getdir {
                 Save-RaBytes -Path $dest -Bytes $bytes
                 $files++
                 if (($files % 25) -eq 0) { Write-Host ("… {0} files" -f $files) -ForegroundColor DarkGray }
-            }
-            catch {
+            } catch {
                 Write-Host ("save failed → {0}: {1}" -f $remoteChild, $_) -ForegroundColor Red
                 $errors++
             }
@@ -349,173 +392,7 @@ function ra-getdir {
     Write-Host ("Done. Dirs: {0}, Files: {1}, Errors: {2}" -f $dirs, $files, $errors) -ForegroundColor Cyan
 }
 
-# ---------------- Shortcuts & banner ----------------
-
-Set-Alias rpwd    ra-pwd    -Force
-Set-Alias rcd     ra-cd     -Force
-Set-Alias rls     ra-ls     -Force
-Set-Alias rcat    ra-cat    -Force
-Set-Alias rget    ra-get    -Force
-Set-Alias rgetdir ra-getdir -Force
-
-Write-Host "RA shell loaded. Commands: ra-status, ra-connect [deviceId], ra-pwd, ra-cd <dir>, ra-ls [path], ra-cat <file>, ra-get <remote> [local], ra-getdir <remoteDir> <localDir> [-SkipAndroid] [-Include ...] [-Exclude ...]" -ForegroundColor Green
-Write-Host "Tip: ensure ADB reverse is set:  adb reverse tcp:8080 tcp:8080" -ForegroundColor DarkGray
-
-# --- NEW helper: make any Android filename safe for Windows/NTFS
-function Sanitize-Name([string]$name) {
-    if ($null -eq $name) { return "_" }
-    # Replace invalid NTFS characters with underscore
-    $bad = [IO.Path]::GetInvalidFileNameChars() -join ''
-    $re = "[{0}]" -f [regex]::Escape($bad)
-    $clean = [regex]::Replace($name, $re, "_")
-
-    # Strip trailing spaces and dots (not allowed on NTFS)
-    $clean = $clean.TrimEnd(" ", ".")
-
-    # Avoid reserved device names
-    if ($clean -match '^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$') {
-        $clean = "_$clean"
-    }
-    if ([string]::IsNullOrWhiteSpace($clean)) { $clean = "_" }
-    return $clean
-}
-
-# --- REPLACE your ra-get with this version
-function ra-get {
-    param(
-        [Parameter(Mandatory = $true)][string]$RemotePath,
-        [string]$OutFile
-    )
-
-    Initialize-RaSession
-
-    # Remote absolute path
-    $target = if ($RemotePath.StartsWith("/")) { $RemotePath } else { Join-PathUnix $global:raCurrentPath $RemotePath }
-
-    # Read the file from device
-    $resp = Send-DeviceCommand -Action "read_file" -Params @{ path = $target }
-    if ($resp.error) { Write-Host "get: $($resp.error)" -ForegroundColor Red; return }
-
-    # Decide local target path
-    $leafFromDevice = if ($resp.result.name) { [string]$resp.result.name } else { [IO.Path]::GetFileName($RemotePath) }
-    if ([string]::IsNullOrWhiteSpace($leafFromDevice)) { $leafFromDevice = "download.bin" }
-    $safeLeaf = Sanitize-Name $leafFromDevice
-
-    $finalPath = if ($OutFile) { $OutFile } else { (Join-Path -Path (Get-Location) -ChildPath $safeLeaf) }
-
-    # If $OutFile points to an existing directory OR ends with \ or /, append filename
-    $looksLikeDir = (Test-Path -LiteralPath $finalPath -PathType Container) -or ($finalPath -match '[\\/]\s*$')
-    if ($looksLikeDir) {
-        $trimmed = $finalPath.TrimEnd('\', '/')
-        if (-not (Test-Path -LiteralPath $trimmed -PathType Container)) {
-            New-Item -ItemType Directory -Force -Path $trimmed | Out-Null
-        }
-        $finalPath = Join-Path -Path $trimmed -ChildPath $safeLeaf
-    }
-    else {
-        $parent = [IO.Path]::GetDirectoryName($finalPath)
-        if ($parent -and -not (Test-Path -LiteralPath $parent -PathType Container)) {
-            New-Item -ItemType Directory -Force -Path $parent | Out-Null
-        }
-    }
-
-    # Decode & write bytes
-    $b64 = [string]$resp.result.base64
-    if ([string]::IsNullOrWhiteSpace($b64)) {
-        Write-Warning "Device returned empty data (base64 was empty) for $target"
-        return
-    }
-    $bytes = [Convert]::FromBase64String($b64)
-    [IO.File]::WriteAllBytes($finalPath, $bytes)
-    Write-Host ("saved → {0} ({1} bytes)" -f $finalPath, $bytes.Length) -ForegroundColor Green
-}
-
-# --- REPLACE your ra-getdir with this version
-function ra-getdir {
-    param(
-        [Parameter(Mandatory = $true)][string]$RemoteDir,
-        [Parameter(Mandatory = $true)][string]$OutDir,
-        [string[]]$Include,      # optional filters, e.g. '*.jpg','*.mp4'
-        [string[]]$Exclude,      # optional excludes
-        [switch]$SkipAndroid,    # skip /Android subtree entirely
-        [int]$MaxDepth = 99
-    )
-
-    Initialize-RaSession
-
-    function Test-Match {
-        param([string]$Name, [string[]]$Patterns)
-        if (-not $Patterns -or $Patterns.Count -eq 0) { return $true }
-        foreach ($p in $Patterns) { if ($Name -like $p) { return $true } }
-        return $false
-    }
-
-    $rootRemote = if ($RemoteDir.StartsWith("/")) { $RemoteDir } else { Join-PathUnix $global:raCurrentPath $RemoteDir }
-
-    if (-not (Test-Path -LiteralPath $OutDir)) {
-        New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
-    }
-
-    function Download-Tree([string]$remotePath, [string]$localPath, [int]$depth) {
-        if ($depth -gt $MaxDepth) { return }
-
-        if ($SkipAndroid -and ($remotePath -like "*/Android" -or $remotePath -like "*/Android/*")) {
-            Write-Host ("skip → {0}" -f $remotePath) -ForegroundColor DarkGray
-            return
-        }
-
-        $list = Send-DeviceCommand -Action "list_files" -Params @{ path = $remotePath }
-        if ($list.error) { Write-Host ("getdir: {0}" -f $list.error) -ForegroundColor Red; return }
-        $items = $list.result
-        if (-not $items) { return }
-
-        # Ensure current local directory exists
-        if (-not (Test-Path -LiteralPath $localPath)) {
-            New-Item -ItemType Directory -Force -Path $localPath | Out-Null
-        }
-
-        foreach ($it in $items) {
-            $safeName = Sanitize-Name $it.name
-            $rChild = Join-PathUnix $remotePath $it.name
-            $lChild = Join-Path $localPath $safeName
-
-            if ($it.isDir) {
-                Download-Tree -remotePath $rChild -localPath $lChild -depth ($depth + 1)
-                continue
-            }
-
-            # filters
-            if (-not (Test-Match -Name $it.name -Patterns $Include)) { continue }
-            if ($Exclude -and (Test-Match -Name $it.name -Patterns $Exclude)) { continue }
-
-            $fileResp = Send-DeviceCommand -Action "read_file" -Params @{ path = $rChild }
-            if ($fileResp.error) {
-                Write-Host ("get: {0} → {1}" -f $fileResp.error, $rChild) -ForegroundColor Red
-                continue
-            }
-
-            try {
-                $b64 = [string]$fileResp.result.base64
-                if ([string]::IsNullOrWhiteSpace($b64)) {
-                    Write-Warning ("empty data → {0}" -f $rChild)
-                    continue
-                }
-                $bytes = [Convert]::FromBase64String($b64)
-                $parent = [IO.Path]::GetDirectoryName($lChild)
-                if ($parent -and -not (Test-Path -LiteralPath $parent)) {
-                    New-Item -ItemType Directory -Force -Path $parent | Out-Null
-                }
-                [IO.File]::WriteAllBytes($lChild, $bytes)
-                Write-Host ("saved → {0} ({1} bytes)" -f $lChild, $bytes.Length) -ForegroundColor Green
-            }
-            catch {
-                Write-Host ("save failed → {0}: {1}" -f $lChild, $_.Exception.Message) -ForegroundColor Red
-            }
-        }
-    }
-
-    Download-Tree -remotePath $rootRemote -localPath $OutDir -depth 0
-}
+# ---------------- Roots helpers ----------------
 
 function ra-roots {
     Initialize-RaSession
@@ -523,14 +400,12 @@ function ra-roots {
     if ($resp.error) { Write-Host "roots: $($resp.error)" -ForegroundColor Red; return }
     $roots = $resp.result.roots
     if (-not $roots -or $roots.Count -eq 0) { Write-Host "(no roots reported)"; return }
-    foreach ($r in $roots) {
-        Write-Host ("{0}`t{1}" -f $r.name, $r.path) -ForegroundColor Cyan
-    }
+    foreach ($r in $roots) { Write-Host ("{0}`t{1}" -f $r.name, $r.path) -ForegroundColor Cyan }
 }
 
 function ra-getall-storage {
     param(
-        [Parameter(Mandatory = $true)][string]$LocalBase,
+        [Parameter(Mandatory=$true)][string]$LocalBase,
         [switch]$SkipAndroid
     )
     Initialize-RaSession
@@ -546,6 +421,29 @@ function ra-getall-storage {
         $name = if ($r.name) { $r.name } else { ($r.path -replace '.*/', 'root') }
         $dest = Join-Path -Path $LocalBase -ChildPath $name
         Write-Host ("== Dumping {0} → {1}" -f $r.path, $dest) -ForegroundColor Yellow
-        ra-getdir $r.path $dest @(@{SkipAndroid = $SkipAndroid }).Where({ $_.Value }).ForEach({ $_ })
+        if ($SkipAndroid) { ra-getdir -RemoteDir $r.path -LocalDir $dest -SkipAndroid }
+        else { ra-getdir -RemoteDir $r.path -LocalDir $dest }
     }
 }
+
+# ---------------- Shortcuts & banner ----------------
+
+Set-Alias rpwd    ra-pwd    -Force
+Set-Alias rcd     ra-cd     -Force
+Set-Alias rls     ra-ls     -Force
+Set-Alias rcat    ra-cat    -Force
+Set-Alias rget    ra-get    -Force
+Set-Alias rput    ra-put    -Force
+Set-Alias rwrite  ra-write  -Force
+Set-Alias rmkdir  ra-mkdir  -Force
+Set-Alias rrm     ra-rm     -Force
+Set-Alias rrmdir  ra-rmdir  -Force
+Set-Alias rgetdir ra-getdir -Force
+
+Write-Host "RA shell loaded. Commands:" -ForegroundColor Green
+Write-Host "  ra-status, ra-connect [deviceId], ra-pwd, ra-cd <dir>, ra-ls [path]" -ForegroundColor Green
+Write-Host "  ra-cat <file>, ra-get <remote> [local], ra-put <local> [remote|dir/]" -ForegroundColor Green
+Write-Host "  ra-mkdir <remoteDir>, ra-write <remoteFile> <text> [-Append], ra-rm <file>, ra-rmdir <dir> [-Recursive]" -ForegroundColor Green
+Write-Host "  ra-getdir <remoteDir> <localDir> [-SkipAndroid] [-Include ...] [-Exclude ...]" -ForegroundColor Green
+Write-Host "  ra-roots, ra-getall-storage <localBase> [-SkipAndroid]" -ForegroundColor Green
+Write-Host "Tip: ensure ADB reverse is set:  adb reverse tcp:8080 tcp:8080" -ForegroundColor DarkGray

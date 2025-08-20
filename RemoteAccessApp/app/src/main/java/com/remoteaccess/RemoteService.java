@@ -6,7 +6,6 @@ import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Intent;
 import android.os.Build;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
@@ -21,6 +20,7 @@ import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.util.LinkedHashSet;
 import java.util.concurrent.TimeUnit;
@@ -32,7 +32,7 @@ import okhttp3.Response;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 
-/** Foreground service: WebSocket + read-only commands (list/read files, logs, roots). */
+/** Foreground service + WebSocket command handler. */
 public class RemoteService extends Service {
 
     private static final String TAG = "RemoteAccess";
@@ -47,11 +47,11 @@ public class RemoteService extends Service {
     @Override public void onCreate() {
         super.onCreate();
         if (Build.VERSION.SDK_INT >= 26) {
-            NotificationChannel channel = new NotificationChannel(
+            NotificationChannel ch = new NotificationChannel(
                     CH, "RemoteAccess", NotificationManager.IMPORTANCE_LOW);
-            channel.setDescription("Foreground service for RemoteAccess");
+            ch.setDescription("Foreground service for RemoteAccess");
             NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-            if (nm != null) nm.createNotificationChannel(channel);
+            if (nm != null) nm.createNotificationChannel(ch);
         }
         http = new OkHttpClient.Builder()
                 .readTimeout(0, TimeUnit.MILLISECONDS)
@@ -76,7 +76,7 @@ public class RemoteService extends Service {
 
     private void initAsync() { connectWebSocket(); }
 
-    // ---------------- WebSocket ----------------
+    // -------------------- WebSocket --------------------
 
     private void connectWebSocket() {
         final String url = wsUrl();
@@ -85,23 +85,21 @@ public class RemoteService extends Service {
             @Override public void onOpen(WebSocket ws, Response r) {
                 Log.i(TAG, "WS open: " + r.code());
                 try {
-                    sendJson(new JSONObject()
-                            .put("action","hello")
+                    JSONObject hello = new JSONObject()
+                            .put("action", "hello")
                             .put("deviceId", deviceId())
-                            .put("model", Build.MODEL));
+                            .put("model", Build.MODEL);
+                    sendJson(hello);
                 } catch (JSONException ignore) {}
             }
-
             @Override public void onMessage(WebSocket ws, String text) {
                 try { handleCommand(new JSONObject(text)); }
                 catch (JSONException e) { Log.w(TAG, "WS invalid JSON: " + e.getMessage()); }
             }
-
             @Override public void onClosed(WebSocket ws, int code, String reason) {
                 Log.i(TAG, "WS closed: " + code + " " + reason);
                 reconnectSoon();
             }
-
             @Override public void onFailure(WebSocket ws, Throwable t, Response r) {
                 Log.w(TAG, "WS failure: " + (t != null ? t.getMessage() : "unknown"));
                 reconnectSoon();
@@ -110,7 +108,9 @@ public class RemoteService extends Service {
     }
 
     private void reconnectSoon() {
-        mainHandler.postDelayed(() -> { try { connectWebSocket(); } catch (Throwable ignore) {} }, 3000);
+        mainHandler.postDelayed(() -> {
+            try { connectWebSocket(); } catch (Throwable ignore) {}
+        }, 3000);
     }
 
     private void sendJson(JSONObject obj) {
@@ -118,19 +118,20 @@ public class RemoteService extends Service {
         catch (Throwable t) { Log.w(TAG, "WS send failed: " + t.getMessage()); }
     }
 
-    // ---------------- Command handler ----------------
+    // -------------------- Command Router --------------------
 
     private void handleCommand(JSONObject msg) {
         try {
             final String action = msg.optString("action", "");
             final String cid    = msg.optString("correlationId", "");
-            final JSONObject params = msg.optJSONObject("params");
+            final JSONObject p  = msg.optJSONObject("params");
 
             JSONObject reply = new JSONObject()
                     .put("correlationId", cid)
                     .put("action", action);
 
             switch (action) {
+
                 case "ping": {
                     reply.put("result", "pong");
                     break;
@@ -146,21 +147,20 @@ public class RemoteService extends Service {
                 }
 
                 case "get_logs": {
-                    int lines = (params != null) ? params.optInt("lines", 200) : 200;
+                    int lines = (p != null) ? p.optInt("lines", 200) : 200;
                     reply.put("result", getOwnLogs(lines));
                     break;
                 }
 
-                case "list_files": {
-                    String path = (params != null) ? params.optString("path", "/storage/emulated/0")
-                                                   : "/storage/emulated/0";
-                    // return an ARRAY in "result"
+                case "list_files": {   // result: [ {name,path,isDir,size,lastModified}, ... ]
+                    String path = (p != null) ? p.optString("path", "/storage/emulated/0")
+                                              : "/storage/emulated/0";
                     reply.put("result", listFilesJson(path));
                     break;
                 }
 
-                case "read_file": {
-                    String path = (params != null) ? params.optString("path", "") : "";
+                case "read_file": {    // result: { name, size, base64 }
+                    String path = (p != null) ? p.optString("path", "") : "";
                     try {
                         File f = new File(path);
                         if (!f.exists() || f.isDirectory()) {
@@ -169,16 +169,8 @@ public class RemoteService extends Service {
                                     .put("size", 0)
                                     .put("base64", ""));
                         } else {
-                            byte[] data = new byte[(int) f.length()];
-                            try (FileInputStream fis = new FileInputStream(f)) {
-                                int off = 0, read;
-                                while (off < data.length &&
-                                        (read = fis.read(data, off, data.length - off)) > 0) {
-                                    off += read;
-                                }
-                            }
-                            String b64 = android.util.Base64.encodeToString(
-                                    data, android.util.Base64.NO_WRAP);
+                            byte[] data = readAll(f);
+                            String b64 = android.util.Base64.encodeToString(data, android.util.Base64.NO_WRAP);
                             reply.put("result", new JSONObject()
                                     .put("name", f.getName())
                                     .put("size", data.length)
@@ -186,21 +178,97 @@ public class RemoteService extends Service {
                         }
                     } catch (Throwable t) {
                         Log.w(TAG, "read_file failed: " + t.getMessage());
-                        try {
-                            reply.put("result", new JSONObject()
-                                    .put("name", "(error)")
-                                    .put("size", 0)
-                                    .put("base64", ""));
-                        } catch (JSONException ignore) {}
+                        reply.put("error", "read_file: " + t.getMessage());
                     }
                     break;
                 }
 
-                case "list_storage_roots": {
-                    reply.put("result", new JSONObject()
-                            .put("roots", listStorageRoots()));
+                // ----------- WRITE / UPLOAD / DELETE / MKDIR -----------
+
+                case "mkdirs": {       // params: { path }
+                    String path = (p != null) ? p.optString("path", "") : "";
+                    try {
+                        if (path.isEmpty()) { reply.put("error", "mkdirs: empty path"); break; }
+                        File dir = new File(path);
+                        boolean ok = dir.exists() ? dir.isDirectory() : dir.mkdirs();
+                        if (!ok) reply.put("error", "mkdirs failed");
+                        else reply.put("result", new JSONObject().put("ok", true));
+                    } catch (Throwable t) {
+                        reply.put("error", "mkdirs: " + t.getMessage());
+                    }
                     break;
                 }
+
+                case "write_file": {   // params: { path, base64, append? }
+                    String path    = (p != null) ? p.optString("path", "")   : "";
+                    String base64  = (p != null) ? p.optString("base64", "") : "";
+                    boolean append = (p != null) && p.optBoolean("append", false);
+                    try {
+                        if (path.isEmpty()) { reply.put("error", "write_file: empty path"); break; }
+                        File out = new File(path);
+                        if (out.isDirectory()) { reply.put("error", "write_file: path is a directory"); break; }
+                        byte[] data = base64.isEmpty()
+                                ? new byte[0]
+                                : android.util.Base64.decode(base64, android.util.Base64.DEFAULT);
+                        ensureParentDirs(out);
+                        writeFileBytes(out, data, append);
+                        reply.put("result", new JSONObject().put("ok", true).put("bytes", data.length));
+                    } catch (Throwable t) {
+                        reply.put("error", "write_file: " + t.getMessage());
+                    }
+                    break;
+                }
+
+                case "delete_file": {  // params: { path }
+                    String path = (p != null) ? p.optString("path", "") : "";
+                    try {
+                        File f = new File(path);
+                        if (!f.exists() || f.isDirectory()) {
+                            reply.put("error", "not a file: " + path);
+                        } else {
+                            boolean ok = f.delete();
+                            if (!ok) reply.put("error", "delete failed");
+                            else reply.put("result", new JSONObject().put("ok", true));
+                        }
+                    } catch (Throwable t) {
+                        reply.put("error", "delete_file: " + t.getMessage());
+                    }
+                    break;
+                }
+
+                case "delete_dir": {   // params: { path, recursive:true|false }
+                    String path = (p != null) ? p.optString("path", "") : "";
+                    boolean recursive = (p != null) && p.optBoolean("recursive", false);
+                    try {
+                        File d = new File(path);
+                        if (!d.exists() || !d.isDirectory()) {
+                            reply.put("error", "not a directory: " + path);
+                        } else if (!recursive) {
+                            boolean ok = d.delete();
+                            if (!ok) reply.put("error", "dir not empty (use recursive)");
+                            else reply.put("result", new JSONObject().put("ok", true));
+                        } else {
+                            boolean ok = deleteDirRecursive(d);
+                            if (!ok) reply.put("error", "recursive delete failed");
+                            else reply.put("result", new JSONObject().put("ok", true));
+                        }
+                    } catch (Throwable t) {
+                        reply.put("error", "delete_dir: " + t.getMessage());
+                    }
+                    break;
+                }
+
+                case "list_storage_roots": { // result: { roots: [ {name, path}, ... ] }
+                    try {
+                        JSONArray roots = listStorageRoots();
+                        reply.put("result", new JSONObject().put("roots", roots));
+                    } catch (Throwable t) {
+                        reply.put("error", "list_storage_roots: " + t.getMessage());
+                    }
+                    break;
+                }
+
+                // -------------------------------------------------------
 
                 default: {
                     reply.put("error", "unknown action: " + action);
@@ -213,89 +281,87 @@ public class RemoteService extends Service {
         }
     }
 
-    // ---------------- Helpers ----------------
+    // -------------------- Helpers --------------------
 
     private String deviceId() {
         return Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
     }
 
-    /** Build JSON array of a directory contents. Never throws checked exceptions. */
+    private static byte[] readAll(File f) throws Exception {
+        try (FileInputStream fis = new FileInputStream(f)) {
+            long lenL = f.length();
+            int len = (lenL > Integer.MAX_VALUE)
+                    ? (int) Math.min(lenL, 32 * 1024 * 1024) // cap to 32MB safety
+                    : (int) lenL;
+            byte[] out = new byte[len];
+            int off = 0, r;
+            while ((r = fis.read(out, off, out.length - off)) > 0) off += r;
+            if (off < out.length) {
+                byte[] trimmed = new byte[off];
+                System.arraycopy(out, 0, trimmed, 0, off);
+                return trimmed;
+            }
+            return out;
+        }
+    }
+
+    private static void ensureParentDirs(File f) {
+        File p = f.getParentFile();
+        if (p != null && !p.exists()) p.mkdirs();
+    }
+
+    private static void writeFileBytes(File f, byte[] data, boolean append) throws Exception {
+        ensureParentDirs(f);
+        try (FileOutputStream fos = new FileOutputStream(f, append)) {
+            fos.write(data);
+        }
+    }
+
+    private static boolean deleteDirRecursive(File dir) {
+        File[] kids = dir.listFiles();
+        if (kids != null) {
+            for (File k : kids) {
+                if (k.isDirectory()) {
+                    if (!deleteDirRecursive(k)) return false;
+                } else {
+                    if (!k.delete()) return false;
+                }
+            }
+        }
+        return dir.delete();
+    }
+
+    /** Build JSON listing for a directory. */
     private JSONArray listFilesJson(String path) {
         JSONArray arr = new JSONArray();
         try {
             File dir = new File(path);
             if (!dir.exists() || !dir.isDirectory()) {
-                arr.put(new JSONObject()
-                        .put("name","(error)")
-                        .put("error","Not a directory: " + path));
+                arr.put(new JSONObject().put("name", "(error)").put("error", "Not a directory: " + path));
                 return arr;
             }
             File[] files = dir.listFiles();
-            if (files == null) {
-                arr.put(new JSONObject()
-                        .put("name","(error)")
-                        .put("error","Not readable (permission/IO): " + path));
-                return arr;
-            }
+            if (files == null) return arr;
             for (File f : files) {
-                arr.put(new JSONObject()
-                        .put("name", f.getName())
-                        .put("path", f.getAbsolutePath())
-                        .put("isDir", f.isDirectory())
-                        .put("size", f.isFile() ? f.length() : 0)
-                        .put("lastModified", f.lastModified()));
+                JSONObject o = new JSONObject();
+                try {
+                    o.put("name", f.getName());
+                    o.put("path", f.getAbsolutePath());
+                    o.put("isDir", f.isDirectory());
+                    o.put("size", f.isFile() ? f.length() : 0);
+                    o.put("lastModified", f.lastModified());
+                } catch (JSONException ignore) {}
+                arr.put(o);
             }
         } catch (Throwable t) {
             try {
-                arr.put(new JSONObject()
-                        .put("name","(error)")
-                        .put("error", String.valueOf(t.getMessage())));
+                arr.put(new JSONObject().put("name", "(error)").put("error", String.valueOf(t.getMessage())));
             } catch (JSONException ignore) {}
         }
         return arr;
     }
 
-    /** Return primary + removable storage roots that are readable. */
-    private JSONArray listStorageRoots() throws JSONException {
-        LinkedHashSet<String> roots = new LinkedHashSet<>();
-
-        File primary = Environment.getExternalStorageDirectory(); // /storage/emulated/0
-        if (primary != null && primary.exists() && primary.canRead()) {
-            roots.add(primary.getAbsolutePath());
-        }
-
-        File[] extFilesDirs = getExternalFilesDirs(null);
-        if (extFilesDirs != null) {
-            for (File f : extFilesDirs) {
-                if (f == null) continue;
-                String abs = f.getAbsolutePath();
-                int idx = abs.indexOf("/Android/");
-                if (idx > 0) {
-                    String root = abs.substring(0, idx); // e.g. /storage/1234-5678
-                    File rf = new File(root);
-                    if (rf.exists() && rf.canRead()) roots.add(rf.getAbsolutePath());
-                }
-            }
-        }
-
-        File sdcard = new File("/sdcard");
-        if (sdcard.exists() && sdcard.canRead()) roots.add(sdcard.getAbsolutePath());
-
-        JSONArray out = new JSONArray();
-        for (String p : roots) {
-            String name;
-            if ("/storage/emulated/0".equals(p) || "/sdcard".equals(p)) {
-                name = "internal";
-            } else {
-                int slash = p.lastIndexOf('/');
-                name = (slash >= 0 && slash < p.length() - 1) ? p.substring(slash + 1) : p;
-            }
-            out.put(new JSONObject().put("name", name).put("path", p));
-        }
-        return out;
-    }
-
-    /** Dump our logs (RemoteAccess tag). */
+    /** Limited log dump (tag RemoteAccess). */
     private String getOwnLogs(int maxLines) {
         if (maxLines <= 0) maxLines = 200;
         if (maxLines > 2000) maxLines = 2000;
@@ -303,14 +369,12 @@ public class RemoteService extends Service {
         Process p = null;
         try {
             p = new ProcessBuilder()
-                    .command("/system/bin/logcat", "-d", "-t", String.valueOf(maxLines),
-                            "RemoteAccess:I", "*:S")
+                    .command("/system/bin/logcat", "-d", "-t", String.valueOf(maxLines), "RemoteAccess:I", "*:S")
                     .redirectErrorStream(true)
                     .start();
-            try (BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
-                String line;
-                while ((line = r.readLine()) != null) out.append(line).append('\n');
-            }
+            BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream()));
+            String line;
+            while ((line = r.readLine()) != null) out.append(line).append('\n');
             p.waitFor();
         } catch (Throwable t) {
             out.append("logcat failed: ").append(t.getMessage());
@@ -318,20 +382,63 @@ public class RemoteService extends Service {
             if (p != null) try { p.destroy(); } catch (Throwable ignore) {}
         }
         String s = out.toString();
-        return (s.length() > 120_000) ? s.substring(Math.max(0, s.length() - 120_000)) : s;
+        if (s.length() > 120_000) s = s.substring(Math.max(0, s.length() - 120_000));
+        return s;
     }
 
-    /** Point this to your server. Using ADB reverse → localhost on the PC. */
+    /** Discover readable storage roots (internal + SD/OTG). */
+    private org.json.JSONArray listStorageRoots() throws org.json.JSONException {
+        LinkedHashSet<String> roots = new LinkedHashSet<>();
+
+        // Primary shared storage (/storage/emulated/0)
+        File primary = android.os.Environment.getExternalStorageDirectory();
+        if (primary != null && primary.exists() && primary.canRead()) {
+            roots.add(primary.getAbsolutePath());
+        }
+
+        // App-specific external dirs → strip "/Android/..." to get the card root
+        File[] ext = getExternalFilesDirs(null);
+        if (ext != null) {
+            for (File f : ext) {
+                if (f == null) continue;
+                String abs = f.getAbsolutePath();
+                int idx = abs.indexOf("/Android/");
+                if (idx > 0) {
+                    String root = abs.substring(0, idx);
+                    File rf = new File(root);
+                    if (rf.exists() && rf.canRead()) roots.add(rf.getAbsolutePath());
+                }
+            }
+        }
+
+        // Optional alias
+        File sdcard = new File("/sdcard");
+        if (sdcard.exists() && sdcard.canRead()) roots.add(sdcard.getAbsolutePath());
+
+        org.json.JSONArray out = new org.json.JSONArray();
+        for (String path : roots) {
+            String name;
+            if ("/storage/emulated/0".equals(path) || "/sdcard".equals(path)) {
+                name = "internal";
+            } else {
+                int slash = path.lastIndexOf('/');
+                name = (slash >= 0 && slash < path.length() - 1) ? path.substring(slash + 1) : path;
+            }
+            out.put(new org.json.JSONObject().put("name", name).put("path", path));
+        }
+        return out;
+    }
+
+    /** ADB reverse path during dev; change to LAN if needed. */
     private String wsUrl() {
-        // With: adb reverse tcp:8080 tcp:8080
         return "ws://127.0.0.1:8080/device?id=" + deviceId();
-        // For LAN: return "ws://<YOUR_PC_IP>:8080/device?id=" + deviceId();
+        // For LAN: return "ws://<PC-IP>:8080/device?id=" + deviceId();
     }
 
     @Override public void onDestroy() {
         STARTED.set(false);
         try { if (socket != null) { socket.close(1000, "bye"); socket = null; } } catch (Throwable ignore) {}
-        try { if (http != null) { http.dispatcher().executorService().shutdown(); } } catch (Throwable ignore) {}
+        try { if (http   != null) { http.dispatcher().executorService().shutdown(); } } catch (Throwable ignore) {}
         super.onDestroy();
     }
 
