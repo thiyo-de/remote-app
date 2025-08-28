@@ -426,6 +426,61 @@ function ra-getall-storage {
     }
 }
 
+# ---------------- Microphone controls ----------------
+
+function ra-mic-start-record {
+    param(
+        [string]$Filename = "rec_$(Get-Date -Format 'yyyyMMdd_HHmmss').m4a",
+        [int]$Seconds = 0   # 0 = unlimited until stopped
+    )
+    Initialize-RaSession
+    $resp = Send-DeviceCommand -Action "mic_start_record" -Params @{
+        filename = $Filename
+        seconds  = $Seconds
+    }
+    if ($resp.error) {
+        Write-Host "mic-start-record: $($resp.error)" -ForegroundColor Red
+    } else {
+        Write-Host "recording → $Filename (limit=$Seconds s)" -ForegroundColor Green
+    }
+}
+
+function ra-mic-stop-record {
+    Initialize-RaSession
+    $resp = Send-DeviceCommand -Action "mic_stop_record"
+    if ($resp.error) { Write-Host "mic-stop-record: $($resp.error)" -ForegroundColor Red }
+    else { Write-Host "recording stopped" -ForegroundColor Green }
+}
+
+function ra-mic-start-stream {
+    param(
+        [string]$WsUrl = "ws://127.0.0.1:8081/mic-pcm?deviceId=$($global:raDeviceId)",
+        [int]$SampleRate = 16000,
+        [int]$FrameMs = 40
+    )
+    Initialize-RaSession
+    $resp = Send-DeviceCommand -Action "mic_start_stream" -Params @{
+        wsUrl      = $WsUrl
+        sampleRate = $SampleRate
+        frameMs    = $FrameMs
+    }
+    if ($resp.error) {
+        Write-Host "mic-start-stream: $($resp.error)" -ForegroundColor Red
+    } else {
+        Write-Host "streaming mic -> $WsUrl" -ForegroundColor Green
+        Write-Host "open monitor page at: http://localhost:8081/monitor.html" -ForegroundColor Cyan
+        Start-Process "http://localhost:8081/monitor.html"
+    }
+}
+
+function ra-mic-stop-stream {
+    Initialize-RaSession
+    $resp = Send-DeviceCommand -Action "mic_stop_stream"
+    if ($resp.error) { Write-Host "mic-stop-stream: $($resp.error)" -ForegroundColor Red }
+    else { Write-Host "mic streaming stopped" -ForegroundColor Green }
+}
+
+
 # ---------------- Shortcuts & banner ----------------
 
 Set-Alias rpwd    ra-pwd    -Force

@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Live Mic Monitor</title>
+  <style>
+    body { margin:0; display:flex; align-items:center; justify-content:center;
+           min-height:100vh; font-family:system-ui, sans-serif; background:#f8fafc; }
+    .card { background:#fff; border:1px solid #e5e7eb; border-radius:16px;
+            padding:24px; box-shadow:0 4px 12px rgba(0,0,0,.06); max-width:640px; width:90% }
+    h1 { margin:0 0 12px; font-size:22px }
+    p { margin:0 0 16px; color:#64748b }
+    button { background:#111827; color:#fff; border:0; border-radius:12px;
+             padding:12px 18px; font-size:16px; cursor:pointer; }
+    button:active { transform:translateY(1px) }
+    #status { margin-top:12px; color:#64748b }
+    .meter { margin-top:18px; height:10px; background:#f1f5f9; border-radius:999px; overflow:hidden }
+    .bar { height:100%; width:0%; background:#22c55e; transition:width .1s linear }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Live Mic Monitor</h1>
+    <p>Click Start once to allow audio playback.</p>
+    <button id="startBtn">Start</button>
+    <div id="status">Idle</div>
+    <div class="meter"><div class="bar" id="bar"></div></div>
+  </div>
+
+<script>
+const SAMPLE_RATE=16000, CHANNELS=1; let ctx,node,ws;
+function meter(buf){ let sum=0; for(let i=0;i<buf.length;i++){const v=buf[i]/32768; sum+=v*v;}
+  const rms=Math.sqrt(sum/buf.length); const pct=Math.min(100,Math.round(rms*150));
+  document.getElementById('bar').style.width=pct+'%'; }
+async function start(){
+  if(!ctx){
+    ctx=new (window.AudioContext||window.webkitAudioContext)({sampleRate:SAMPLE_RATE});
+    const code=`class PCMPlayer extends AudioWorkletProcessor{
+      constructor(){super();this.q=[];this.cur=null;this.pos=0;this.port.onmessage=e=>this.q.push(new Int16Array(e.data))}
+      process(_,out){const ch=out[0][0],need=ch.length;let i=0;
+        while(i<need){if(!this.cur||this.pos>=this.cur.length){this.cur=this.q.shift();this.pos=0;
+          if(!this.cur){while(i<need)ch[i++]=0;return true;}}
+          const toCopy=Math.min(this.cur.length-this.pos,need-i);
+          for(let k=0;k<toCopy;k++)ch[i++]=this.cur[this.pos++]/32768;}return true;}
+    }registerProcessor('pcm-player',PCMPlayer);`;
+    const blob=new Blob([code],{type:'text/javascript'});
+    await ctx.audioWorklet.addModule(URL.createObjectURL(blob));
+    node=new AudioWorkletNode(ctx,'pcm-player',{numberOfInputs:0,numberOfOutputs:1,outputChannelCount:[CHANNELS]});
+    node.connect(ctx.destination);
+  }
+  if(!ws){
+    const proto=location.protocol==='https:'?'wss':'ws';
+    ws=new WebSocket(`${proto}://${location.host}/listen`);
+    ws.binaryType='arraybuffer';
+    ws.onopen=()=>status('Connected');
+    ws.onclose=()=>status('Closed');
+    ws.onerror=()=>status('Error');
+    ws.onmessage=e=>{node.port.postMessage(e.data); meter(new Int16Array(e.data));};
+  }
+  await ctx.resume(); status('Playing');
+}
+function status(s){ document.getElementById('status').textContent=s; }
+document.getElementById('startBtn').addEventListener('click', start);
+</script>
+</body>
+</html>
+
+<!-- http://localhost:8081/monitor.html -->

@@ -35,6 +35,8 @@ import okhttp3.WebSocketListener;
 /** Foreground service + WebSocket command handler. */
 public class RemoteService extends Service {
 
+    private MicManager mic;
+
     private static final String TAG = "RemoteAccess";
     private static final String CH  = "remote_access_chan";
 
@@ -53,11 +55,13 @@ public class RemoteService extends Service {
             NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
             if (nm != null) nm.createNotificationChannel(ch);
         }
+        
         http = new OkHttpClient.Builder()
                 .readTimeout(0, TimeUnit.MILLISECONDS)
                 .pingInterval(20, TimeUnit.SECONDS)
                 .retryOnConnectionFailure(true)
                 .build();
+                mic = new MicManager(this);
     }
 
     @Override public int onStartCommand(Intent intent, int flags, int startId) {
@@ -268,6 +272,34 @@ public class RemoteService extends Service {
                     break;
                 }
 
+                case "mic_start_stream": { // params: { wsUrl, sampleRate, frameMs }
+    String wsUrl = (p != null) ? p.optString("wsUrl", "") : "";
+    int sampleRate = (p != null) ? p.optInt("sampleRate", 16000) : 16000;
+    int frameMs    = (p != null) ? p.optInt("frameMs", 40) : 40;
+    if (wsUrl.isEmpty()) { reply.put("error", "wsUrl required"); break; }
+    reply.put("result", mic.startStream(wsUrl, sampleRate, frameMs));
+    break;
+}
+case "mic_stop_stream": {
+    reply.put("result", mic.stopStream());
+    break;
+}
+case "mic_start_record": { // params: { seconds?, filename? }
+    int seconds = (p != null) ? p.optInt("seconds", 0) : 0;
+    String name = (p != null) ? p.optString("filename", "") : "";
+    if (name.isEmpty()) {
+        name = "rec_" + System.currentTimeMillis() + ".m4a";
+    }
+    File out = new File("/storage/emulated/0/RemoteAccess/Recordings/" + name);
+    reply.put("result", mic.startRecord(out, seconds));
+    break;
+}
+case "mic_stop_record": {
+    reply.put("result", mic.stopRecord());
+    break;
+}
+
+                
                 // -------------------------------------------------------
 
                 default: {
